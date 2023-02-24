@@ -13,6 +13,9 @@ using ZXing.Common;
 using Emgu.CV;
 using Emgu.CV.Structure;
 using Emgu.CV.CvEnum;
+using System.Linq;
+using Emgu.CV.Util;
+using System.Collections.ObjectModel;
 
 namespace CaptureWebcam
 {
@@ -20,11 +23,12 @@ namespace CaptureWebcam
     {
         VideoCapture capture;
         Timer timer;
-
+        public ObservableCollection<string> QRList { get; set; } = new ObservableCollection<string>() { "Scanned QRs"};
         public MainWindow()
         {
             InitializeComponent();
 
+            listofQR.ItemsSource = QRList;
             //the fps of the webcam
             int cameraFps = 30;
 
@@ -47,23 +51,6 @@ namespace CaptureWebcam
 
         private async void timer_Tick(object sender, ElapsedEventArgs e)
         {
-            //there is a qr code image visible
-            if (feedImage.Visibility == Visibility.Collapsed)
-            {
-                timer.Stop();
-
-                //the delay time you want to display the qr code in the ui for
-                await Task.Run(() => Task.Delay(2500));
-
-                //set the image visibility
-                this.Dispatcher.Invoke(() =>
-                {
-                    feedImage.Visibility = Visibility.Visible;
-                    Image1.Visibility = Visibility.Collapsed;
-                });
-
-                timer.Start();
-            }
 
             this.Dispatcher.Invoke(() =>
             {
@@ -76,90 +63,71 @@ namespace CaptureWebcam
                 //convert the mat to a bitmap
                 var bmp = mat2.ToImage<Bgr, byte>().ToBitmap();
 
+                var source = new BitmapLuminanceSource(bmp);
+                var bitmap = new BinaryBitmap(new HybridBinarizer(source));
+                var result = new MultiFormatReader().decode(bitmap);
+
+                if(result!= null)
+                {
+                    
+                    QRList.Add(result.Text);
+                    if(QRList.Count > 50)
+                    {
+                        var b = QRList[0];
+                        QRList.Clear();
+                        QRList.Add(b);
+                    }
+
+                    var rPoints = result.ResultPoints;
+                    //0 botright 1 topright 2 topleft 3 botleft
+                    if(rPoints.Length > 0)
+                    {
+                        System.Drawing.Point[] points = new System.Drawing.Point[rPoints.Length+1];
+                        for (var i = 0; i < rPoints.Length; i++)
+                        {
+                            var newX = (int)Math.Round(rPoints[i].X);
+                            var newY = (int)Math.Round(rPoints[i].Y);
+                            points[i].X = newX;
+                            points[i].Y = newY;
+                        }
+                        points[rPoints.Length] = points[0];
+                        
+                        System.Drawing.Point textPoint = points[2];
+                        textPoint.Offset(0, -15);
+
+                        //This was me learning contours
+
+                        //Mat binaryMat = new Mat();
+                        //Mat grayMat2 = mat2;
+                        //VectorOfVectorOfPoint contours = new VectorOfVectorOfPoint();
+                        //Mat hierarchy = new Mat();
+
+                        //CvInvoke.CvtColor(mat2, grayMat2, ColorConversion.Bgr2Gray, 1);
+
+                        //CvInvoke.Threshold(grayMat2, binaryMat, 180, 255, ThresholdType.Binary);
+
+                        //CvInvoke.CvtColor(mat2, binaryMat, ColorConversion.Bgr2Gray, 1);
+
+                        //CvInvoke.FindContours(binaryMat, contours, hierarchy, RetrType.External, ChainApproxMethod.ChainApproxSimple);
+
+                        //CvInvoke.DrawContours(mat2, contours, -1, new MCvScalar(255, 0, 0), 5);
+
+                        //draw on the matrix the polylines and text
+                        CvInvoke.PutText(mat2, "QR Code", textPoint,FontFace.HersheySimplex, 2, new MCvScalar(255,0,0), 4);
+                        CvInvoke.Polylines(mat2, points, false, new MCvScalar(0, 0, 255), 2);
+                    }
+                }
+
+                var bmpDrawn = mat2.ToImage<Bgr, byte>().ToBitmap();
                 //copy the bitmap to a memorystream
                 var ms = new MemoryStream();
-                bmp.Save(ms, ImageFormat.Bmp);
+                bmpDrawn.Save(ms, ImageFormat.Bmp);
 
                 //display the image on the ui
                 feedImage.Source = BitmapFrame.Create(ms);
 
-                //try to find a qr code in the feed
-                string qrcode = FindQrCodeInImage(bmp);
 
-                if (!string.IsNullOrEmpty(qrcode))
-                {
-                    //set the found text in the qr code in the ui
-                    TextBlock1.Text = qrcode;
-                    TextBlock2.Text = $"Last scan: {DateTime.Now.ToLongDateString()} at {DateTime.Now.ToShortTimeString()}.";
-
-                    //play a sound to indicate qr code found
-                    var player_ok = new SoundPlayer(GetStreamFromResource("sound_ok.wav"));
-                    player_ok.Play();
-
-                    //hide the feed image
-                    feedImage.Visibility = Visibility.Collapsed;
-                }
             });
-        }
-
-
-        private string FindQrCodeInImage(Bitmap bmp)
-        {
-            //decode the bitmap and try to find a qr code
-            var source = new BitmapLuminanceSource(bmp);
-            var bitmap = new BinaryBitmap(new HybridBinarizer(source));
-            var result = new MultiFormatReader().decode(bitmap);
-
-            //no qr code found in bitmap
-            if (result == null)
-            {
-                return null;
-            }
-
-            //create a new qr code image
-            var writer = new BarcodeWriter
-            {
-                Format = BarcodeFormat.QR_CODE,
-                Options = new EncodingOptions
-                {
-                    Height = 300,
-                    Width = 300
-                }
-            };
-
-            //write the result to the new qr code bmp image
-            var qrcode = writer.Write(result.Text);
-
-            //make the bmp transparent
-            qrcode.MakeTransparent();
-
-            //show the found qr code in the app
-            var stream = new MemoryStream();
-            qrcode.Save(stream, ImageFormat.Png);
-
-            //display the new qr code in the ui
-            Image1.Source = BitmapFrame.Create(stream);
-            Image1.Visibility = Visibility.Visible;
-
-            //and/or save the new qr code image to disk if needed
-            try
-            {
-                //qrcode.Save($"qr_code_{DateTime.Now.ToString("yyyyMMddHHmmss")}.gif", ImageFormat.Gif);
-            }
-            catch
-            {
-                //handle disk write errors here
-            }
-
-            //return the found qr code text
-            return result.Text;
-        }
-
-
-        private static Stream GetStreamFromResource(string filename)
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            return assembly.GetManifestResourceStream(string.Format("{0}.Resources.{1}", assembly.GetName().Name, filename));
         }
     }
 }

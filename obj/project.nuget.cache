@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "dgSpecHash": "8cxaOZDw3fHeQbrD+1BpultEJQcJ+QINlB/ljiKawsSiOQOtxl+jo5nDNNYv9dihoqgMhUcqfyQ97sNebhkhZA==",
+  "success": true,
+  "projectFilePath": "C:\\repos\\EmguCVTest\\CaptureWebcam.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\mchlc\\.nuget\\packages\\emgu.cv\\4.5.2.4673\\emgu.cv.4.5.2.4673.nupkg.sha512",
+    "C:\\Users\\mchlc\\.nuget\\packages\\emgu.cv.bitmap\\4.5.2.4673\\emgu.cv.bitmap.4.5.2.4673.nupkg.sha512",
+    "C:\\Users\\mchlc\\.nuget\\packages\\emgu.cv.runtime.windows\\4.5.2.4673\\emgu.cv.runtime.windows.4.5.2.4673.nupkg.sha512",
+    "C:\\Users\\mchlc\\.nuget\\packages\\emgu.runtime.windows.msvc.rt.x64\\19.29.30038.1\\emgu.runtime.windows.msvc.rt.x64.19.29.30038.1.nupkg.sha512",
+    "C:\\Users\\mchlc\\.nuget\\packages\\emgu.runtime.windows.msvc.rt.x86\\19.29.30038.1\\emgu.runtime.windows.msvc.rt.x86.19.29.30038.1.nupkg.sha512",
+    "C:\\Users\\mchlc\\.nuget\\packages\\system.drawing.common\\5.0.2\\system.drawing.common.5.0.2.nupkg.sha512",
+    "C:\\Users\\mchlc\\.nuget\\packages\\system.drawing.primitives\\4.3.0\\system.drawing.primitives.4.3.0.nupkg.sha512",
+    "C:\\Users\\mchlc\\.nuget\\packages\\system.runtime\\4.3.1\\system.runtime.4.3.1.nupkg.sha512",
+    "C:\\Users\\mchlc\\.nuget\\packages\\system.runtime.interopservices.runtimeinformation\\4.3.0\\system.runtime.interopservices.runtimeinformation.4.3.0.nupkg.sha512",
+    "C:\\Users\\mchlc\\.nuget\\packages\\zxing.net\\0.16.6\\zxing.net.0.16.6.nupkg.sha512"
+  ],
+  "logs": []
+}
